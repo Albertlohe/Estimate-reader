@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>NPWD SOR 2021 — Rate Lookup AI</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=IBM+Plex+Mono:wght@400;600&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --navy:#0D1B2A;--navy2:#1A2E44;--blue:#2B5EA7;--blue2:#3A7BD5;
+  --amber:#F5A623;--amber2:#FFC857;--red:#C0392B;--green:#1A7A4A;
+  --grey0:#F4F6FA;--grey1:#E8EDF5;--grey2:#C4CDD8;--grey3:#8A96A3;
+  --shadow:0 2px 12px rgba(13,27,42,.12);--shadow2:0 6px 32px rgba(13,27,42,.18);
+}
+html{scroll-behavior:smooth}
+body{font-family:'DM Sans',sans-serif;background:var(--grey0);color:#1A2733;min-height:100vh;font-size:14px}
+header{background:var(--navy);border-bottom:3px solid var(--amber);position:sticky;top:0;z-index:100;box-shadow:var(--shadow2)}
+.hdr{max-width:1300px;margin:0 auto;display:flex;align-items:center;gap:16px;padding:0 24px;height:60px}
+.logo{background:var(--amber);color:var(--navy);font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:17px;padding:4px 10px}
+.hdr-title{font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:21px;color:#fff;letter-spacing:.06em}
+.hdr-title span{color:var(--amber2)}
+.spill{flex:1}
+.status-pill{display:flex;align-items:center;gap:7px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:5px 14px;font-size:11px;color:#C4CDD8;font-family:'IBM Plex Mono',monospace}
+.dot{width:8px;height:8px;border-radius:50%;background:#8A96A3;transition:background .4s}
+.dot.on{background:#2ECC71;box-shadow:0 0 6px #2ECC71}
+.layout{max-width:1300px;margin:0 auto;display:grid;grid-template-columns:340px 1fr;gap:20px;padding:20px}
+@media(max-width:900px){.layout{grid-template-columns:1fr}}
+.sidebar>*+*{margin-top:16px}
+.card{background:#fff;border-radius:8px;border:1px solid var(--grey1);box-shadow:var(--shadow);overflow:hidden}
+.card-hdr{background:var(--navy2);padding:12px 18px;display:flex;align-items:center;gap:10px}
+.card-title{font-family:'Barlow Condensed',sans-serif;font-size:14px;font-weight:700;color:#fff;letter-spacing:.08em;text-transform:uppercase}
+.badge{background:var(--amber);color:var(--navy);font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:12px;width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.card-body{padding:18px}
+.dz{border:2px dashed var(--grey2);border-radius:6px;padding:24px 14px;text-align:center;cursor:pointer;transition:all .2s;position:relative}
+.dz:hover,.dz.over{border-color:var(--blue2);background:#EBF3FF}
+.dz input{position:absolute;inset:0;opacity:0;cursor:pointer}
+.dz-icon{font-size:28px;margin-bottom:6px}
+.dz-label{font-size:12px;color:#8A96A3}.dz-label strong{color:var(--blue)}
+.dz-name{margin-top:8px;font-size:11px;font-family:'IBM Plex Mono',monospace;color:var(--blue);display:none}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:9px 18px;border:none;border-radius:5px;font-family:'DM Sans',sans-serif;font-weight:600;font-size:13px;cursor:pointer;transition:all .18s}
+.btn-primary{background:var(--blue);color:#fff}.btn-primary:hover{background:var(--blue2);transform:translateY(-1px)}
+.btn-primary:disabled{background:var(--grey2);color:#8A96A3;cursor:not-allowed;transform:none}
+.btn-amber{background:var(--amber);color:var(--navy)}.btn-amber:hover{background:var(--amber2)}
+.btn-outline{background:transparent;color:var(--blue);border:1.5px solid var(--blue)}.btn-outline:hover{background:var(--blue);color:#fff}
+.btn-sm{padding:6px 12px;font-size:12px}.btn-block{width:100%}
+.fl{display:block;font-size:11px;font-weight:600;color:#8A96A3;text-transform:uppercase;letter-spacing:.06em;margin-bottom:5px}
+input[type=text],select,textarea{width:100%;padding:8px 11px;border:1.5px solid var(--grey2);border-radius:5px;font-family:'DM Sans',sans-serif;font-size:13px;color:#1A2733;background:#fff;outline:none;transition:border-color .2s}
+input[type=text]:focus,select:focus{border-color:var(--blue2)}
+textarea{resize:vertical;min-height:110px;font-family:'IBM Plex Mono',monospace;font-size:12px}
+.fg{margin-bottom:12px}
+.hint{font-size:11px;color:#8A96A3;margin-top:4px}
+.prog-wrap{background:var(--grey1);border-radius:4px;height:5px;margin-top:10px;overflow:hidden;display:none}
+.prog-bar{background:var(--blue);height:100%;width:0;transition:width .4s;border-radius:4px}
+.tab-bar{display:flex;border-bottom:2px solid var(--grey1)}
+.tab{padding:11px 18px;font-size:13px;font-weight:600;color:#8A96A3;cursor:pointer;border:none;background:none;border-bottom:2px solid transparent;margin-bottom:-2px;transition:all .2s}
+.tab.active{color:var(--blue);border-bottom-color:var(--blue)}
+.tab-panel{display:none;padding:18px}.tab-panel.active{display:block}
+.results-wrap{overflow-x:auto;margin-top:14px;border:1px solid var(--grey1);border-radius:6px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+thead tr{background:var(--navy2)}
+thead th{padding:9px 12px;text-align:left;font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;letter-spacing:.08em;color:#fff;white-space:nowrap}
+tbody tr:nth-child(even){background:var(--grey0)}
+tbody tr:hover{background:var(--grey1)}
+tbody td{padding:8px 12px;border-bottom:1px solid var(--grey1)}
+tbody tr:last-child td{border-bottom:none}
+.nf td{background:#FFF5F5!important;color:var(--red)}
+.mf-row td{background:#FFF9E6!important}
+.rate-cell{font-family:'IBM Plex Mono',monospace;font-weight:600;color:var(--blue)}
+.final-cell{font-family:'IBM Plex Mono',monospace;font-weight:700;color:var(--amber)}
+.mf-val{font-family:'IBM Plex Mono',monospace;font-weight:700;color:#856404}
+.code-cell{font-family:'IBM Plex Mono',monospace;font-size:11px}
+.desc-cell{max-width:280px;color:#8A96A3;font-size:11px}
+.b-found{font-size:10px;padding:2px 7px;border-radius:10px;font-weight:600}
+.b-found.ok{background:#E8F5E9;color:var(--green)}.b-found.nf{background:#FDECEA;color:var(--red)}
+.b-mf{font-size:10px;padding:2px 7px;border-radius:10px;font-weight:600;background:#FFF3CD;color:#856404}
+.b-no{font-size:10px;padding:2px 7px;border-radius:10px;font-weight:600;background:var(--grey1);color:#8A96A3}
+.stats-bar{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:14px}
+.stat{background:#fff;border:1px solid var(--grey1);border-radius:6px;padding:8px 14px;display:flex;align-items:center;gap:8px;box-shadow:var(--shadow)}
+.stat-n{font-family:'Barlow Condensed',sans-serif;font-size:22px;font-weight:800;color:var(--navy)}
+.stat-l{font-size:10px;color:#8A96A3;font-weight:600;text-transform:uppercase}
+.mf-info{background:#FFF9E6;border:1px solid #F5C842;border-radius:6px;padding:10px 14px;font-size:12px;color:#7A5C00;margin-top:10px;display:none}
+.toast-area{position:fixed;bottom:20px;right:20px;z-index:999}
+.toast{max-width:340px;padding:11px 16px;border-radius:7px;font-size:12px;font-weight:500;box-shadow:var(--shadow2);margin-top:7px;animation:si .3s ease}
+@keyframes si{from{opacity:0;transform:translateX(30px)}to{opacity:1;transform:none}}
+.toast.success{background:#1E4D2B;color:#D4F5E2}.toast.error{background:#5C1717;color:#FFD0D0}.toast.info{background:var(--navy2);color:var(--grey1)}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:sp .7s linear infinite}
+@keyframes sp{to{transform:rotate(360deg)}}
+.action-row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.srch-wrap{position:relative}
+.ac{position:absolute;top:100%;left:0;right:0;background:#fff;border:1.5px solid var(--blue2);border-top:none;border-radius:0 0 6px 6px;max-height:200px;overflow-y:auto;z-index:50;box-shadow:var(--shadow2);display:none}
+.ac.open{display:block}
+.ac-item{padding:7px 12px;cursor:pointer;border-bottom:1px solid var(--grey1)}
+.ac-item:hover{background:var(--grey0)}
+.ac-code{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--blue);font-weight:600}
+.ac-desc{font-size:11px;color:#8A96A3}
+footer{text-align:center;padding:20px;font-size:11px;color:#8A96A3;border-top:1px solid var(--grey1);font-family:'IBM Plex Mono',monospace}
+
+/* ── LANDING PAGE STYLES (added) ───────────────────────────── */
+#lp-overlay{
+  position:fixed;inset:0;z-index:9999;
+  background:var(--navy);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  overflow:hidden;
+  transition:opacity .65s ease,transform .65s ease;
+}
+#lp-overlay.lp-exit{opacity:0;transform:scale(1.05);pointer-events:none}
+.lp-grid{
+  position:absolute;inset:0;pointer-events:none;
+  background-image:linear-gradient(rgba(59,122,213,.07) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(59,122,213,.07) 1px,transparent 1px);
+  background-size:54px 54px;
+  mask-image:radial-gradient(ellipse 80% 80% at 50% 50%,black 30%,transparent 100%);
+}
+.lp-orb{position:absolute;border-radius:50%;filter:blur(90px);opacity:.28;pointer-events:none}
+.lp-orb1{width:520px;height:520px;background:radial-gradient(circle,#2B5EA7,transparent);top:-140px;left:-140px}
+.lp-orb2{width:420px;height:420px;background:radial-gradient(circle,#1A7A4A,transparent);bottom:-100px;right:-100px}
+.lp-orb3{width:280px;height:280px;background:radial-gradient(circle,#F5A623,transparent);top:55%;left:55%;transform:translate(-50%,-50%)}
+.lp-inner{position:relative;z-index:2;text-align:center;padding:32px 24px;max-width:700px}
+.lp-chip{
+  display:inline-flex;align-items:center;gap:8px;
+  background:rgba(59,122,213,.14);border:1px solid rgba(59,122,213,.3);
+  border-radius:100px;padding:5px 16px;margin-bottom:28px;
+  font-family:'IBM Plex Mono',monospace;font-size:10.5px;
+  color:#7EB6FF;letter-spacing:.07em;text-transform:uppercase;
+  animation:lpUp .8s ease both;
+}
+.lp-chip-dot{width:6px;height:6px;border-radius:50%;background:#2ECC71;animation:lpPulse 2s infinite}
+@keyframes lpPulse{0%,100%{opacity:1}50%{opacity:.3}}
+.lp-logo-row{
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  margin-bottom:18px;animation:lpUp .8s ease .1s both;
+}
+.lp-logo-box{
+  background:var(--amber);color:var(--navy);
+  font-family:'Barlow Condensed',sans-serif;font-weight:800;font-size:20px;
+  padding:5px 12px;border-radius:5px;letter-spacing:.04em;
+}
+.lp-logo-name{
+  font-family:'Barlow Condensed',sans-serif;font-weight:700;
+  font-size:15px;color:rgba(255,255,255,.45);letter-spacing:.12em;text-transform:uppercase;
+}
+.lp-h1{
+  font-family:'Barlow Condensed',sans-serif;font-weight:800;
+  font-size:clamp(44px,8vw,74px);line-height:1;
+  color:#fff;letter-spacing:-.01em;margin-bottom:6px;
+  animation:lpUp .8s ease .15s both;
+}
+.lp-h1 span{color:var(--amber2)}
+.lp-h2{
+  font-family:'Barlow Condensed',sans-serif;font-weight:600;
+  font-size:clamp(18px,3vw,26px);color:rgba(255,255,255,.5);
+  letter-spacing:.06em;text-transform:uppercase;margin-bottom:24px;
+  animation:lpUp .8s ease .2s both;
+}
+.lp-desc{
+  font-size:15px;color:rgba(196,205,216,.8);line-height:1.75;
+  max-width:480px;margin:0 auto 36px;
+  animation:lpUp .8s ease .25s both;
+}
+.lp-btn{
+  display:inline-flex;align-items:center;gap:12px;
+  background:var(--blue);color:#fff;
+  font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:19px;
+  letter-spacing:.06em;text-transform:uppercase;
+  padding:15px 38px;border-radius:7px;border:none;cursor:pointer;
+  box-shadow:0 6px 28px rgba(43,94,167,.5);
+  transition:all .22s ease;
+  animation:lpUp .8s ease .32s both;
+  position:relative;overflow:hidden;
+}
+.lp-btn::after{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(to bottom,rgba(255,255,255,.12),transparent);
+}
+.lp-btn:hover{background:var(--blue2);transform:translateY(-3px);box-shadow:0 12px 40px rgba(58,123,213,.55)}
+.lp-btn:active{transform:translateY(-1px)}
+.lp-btn-arrow{font-size:22px;transition:transform .2s}
+.lp-btn:hover .lp-btn-arrow{transform:translateX(5px)}
+.lp-pills{
+  display:flex;flex-wrap:wrap;gap:9px;justify-content:center;
+  margin-top:32px;animation:lpUp .8s ease .42s both;
+}
+.lp-pill{
+  display:flex;align-items:center;gap:6px;
+  background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);
+  border-radius:100px;padding:6px 14px;
+  font-size:12px;color:rgba(196,205,216,.8);
+  font-family:'DM Sans',sans-serif;
+}
+.lp-pill-icon{font-size:13px}
+.lp-footer-txt{
+  position:absolute;bottom:20px;
+  font-family:'IBM Plex Mono',monospace;font-size:10px;
+  color:rgba(138,150,163,.35);letter-spacing:.08em;text-transform:uppercase;
+}
+@keyframes lpUp{
+  from{opacity:0;transform:translateY(22px)}
+  to{opacity:1;transform:translateY(0)}
+}
+/* hide main app until landing dismissed */
+#app-root{display:none}
+</style>
+</head>
+<body>
+
+<!-- ═══ LANDING PAGE (injected — no backend changes) ═══ -->
+<div id="lp-overlay">
+  <div class="lp-grid"></div>
+  <div class="lp-orb lp-orb1"></div>
+  <div class="lp-orb lp-orb2"></div>
+  <div class="lp-orb lp-orb3"></div>
+  <div class="lp-inner">
+    <div class="lp-chip"><div class="lp-chip-dot"></div>Nagaland Public Works Department</div>
+    <div class="lp-logo-row">
+      <div class="lp-logo-box">NPWD</div>
+      <div class="lp-logo-name">Schedule of Rates</div>
+    </div>
+    <div class="lp-h1">SOR <span>2021</span></div>
+    <div class="lp-h2">Rate Lookup Tool</div>
+    <p class="lp-desc">Instantly retrieve Schedule of Rates across all 12 Nagaland districts with Multiplying Factor support, Excel upload &amp; live SOR search.</p>
+    <button class="lp-btn" onclick="enterApp()">
+      Open Rate Lookup System
+      <span class="lp-btn-arrow">→</span>
+    </button>
+    <div class="lp-pills">
+      <div class="lp-pill"><span class="lp-pill-icon">🏔️</span>12 Districts</div>
+      <div class="lp-pill"><span class="lp-pill-icon">📋</span>2,101 SOR Items</div>
+      <div class="lp-pill"><span class="lp-pill-icon">⚡</span>Instant Lookup</div>
+      <div class="lp-pill"><span class="lp-pill-icon">📊</span>Excel Export</div>
+      <div class="lp-pill"><span class="lp-pill-icon">✖</span>MF Calculator</div>
+    </div>
+  </div>
+  <div class="lp-footer-txt">NPWD SOR 2021 · Internal Use Only · By Aloto Albert</div>
+</div>
+
+<!-- ═══ ORIGINAL APP (completely unchanged below) ═══ -->
+<div id="app-root">
+<header>
+  <div class="hdr">
+    <div class="logo">NPWD</div>
+    <div class="hdr-title">SOR 2021 &nbsp;<span>Rate Lookup Tool</span></div>
+    <div class="spill"></div>
+    <div class="status-pill"><div class="dot" id="statusDot"></div><span id="statusText">SOR not loaded</span></div>
+  </div>
+</header>
+
+<div class="layout">
+  <aside class="sidebar">
+
+    <div class="card">
+      <div class="card-hdr"><div class="badge">1</div><div class="card-title">Upload SOR PDF</div></div>
+      <div class="card-body">
+        <div class="dz" id="sorDZ"><input type="file" id="sorFile" accept=".pdf"/>
+          <div class="dz-icon">📄</div>
+          <div class="dz-label">Drop <strong>NPWD SOR 2021 PDF</strong> here</div>
+          <div class="dz-name" id="sorFN"></div>
+        </div>
+        <div class="prog-wrap" id="sorProg"><div class="prog-bar" id="sorPB"></div></div>
+        <div style="margin-top:12px"><button class="btn btn-primary btn-block" id="btnLoad" onclick="uploadSOR()">Load SOR into Memory</button></div>
+        <p class="hint" style="margin-top:8px">Parses all pages, 12 districts, auto-detects MF items.</p>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-hdr"><div class="badge">2</div><div class="card-title">District &amp; Block MF</div></div>
+      <div class="card-body">
+        <div class="fg">
+          <label class="fl">District</label>
+          <select id="selDistrict" onchange="onDistrictChange()">
+            <option>Kohima</option><option>Dimapur</option><option>Peren</option>
+            <option>Wokha</option><option>Phek</option><option>Zunheboto</option>
+            <option>Mokokchung</option><option>Tuensang</option><option>Mon</option>
+            <option>Longleng</option><option>Kiphire</option><option>Noklak</option>
+          </select>
+        </div>
+        <div class="fg">
+          <label class="fl">Administrative Block</label>
+          <select id="selBlock" onchange="onBlockChange()"></select>
+        </div>
+        <div class="fg">
+          <label class="fl">Block MF (from Annexure-I)</label>
+          <input type="text" id="inpMF" value="1.00" readonly
+            style="background:#F4F6FA;font-family:'IBM Plex Mono',monospace;font-weight:700;font-size:15px;color:#0D1B2A"/>
+        </div>
+        <div class="mf-info" id="mfInfo">
+          <b>ℹ MF applied only to MF-flagged items.</b><br/>
+          Other items always use MF = 1.00 regardless.
+        </div>
+      </div>
+    </div>
+
+  </aside>
+
+  <main>
+    <div class="card">
+      <div class="tab-bar">
+        <button class="tab active" onclick="switchTab('tType')">✏️ &nbsp;Type Codes</button>
+        <button class="tab" onclick="switchTab('tUpload')">📥 &nbsp;Upload Excel</button>
+        <button class="tab" onclick="switchTab('tSearch')">🔍 &nbsp;Search SOR</button>
+      </div>
+
+      <div class="tab-panel active" id="tType">
+        <div class="fg">
+          <label class="fl">SOR Codes — one per line</label>
+          <textarea id="manualCodes" placeholder="A 2.6.1,10&#10;A 4.1.5,25&#10;A 7.1.1,5&#10;A 5.1.2,12&#10;A 5.22.4,8"></textarea>
+        </div>
+        <div class="action-row">
+          <button class="btn btn-primary" onclick="lookupManual()">
+            <span id="lookSpin" class="spinner" style="display:none"></span>Lookup Rates
+          </button>
+          <button class="btn btn-outline btn-sm" onclick="clearManual()">Clear</button>
+        </div>
+      </div>
+
+      <div class="tab-panel" id="tUpload">
+        <p style="font-size:13px;color:#8A96A3;margin-bottom:12px">
+          <strong style="color:#1A2733">Col A</strong> = Code &nbsp;|&nbsp;
+          <strong style="color:#1A2733">Col B</strong> = Quantity &nbsp;|&nbsp;
+          <strong style="color:#1A2733">Col C</strong> = District override (optional) &nbsp;|&nbsp;
+          <strong style="color:#1A2733">Col D</strong> = Block MF override (optional). Row 1 = header.
+        </p>
+        <div class="dz" id="xlDZ"><input type="file" id="xlFile" accept=".xlsx,.xls"/>
+          <div class="dz-icon">📊</div>
+          <div class="dz-label">Drop <strong>Excel file</strong> here</div>
+          <div class="dz-name" id="xlFN"></div>
+        </div>
+        <div style="margin-top:12px">
+          <button class="btn btn-primary" onclick="uploadExcel()">
+            <span id="xlSpin" class="spinner" style="display:none"></span>Process Excel
+          </button>
+        </div>
+      </div>
+
+      <div class="tab-panel" id="tSearch">
+        <div class="fg srch-wrap">
+          <label class="fl">Search by code or description</label>
+          <input type="text" id="searchInput" placeholder="e.g. earthwork, A 4.1…" oninput="searchSOR()"/>
+          <div class="ac" id="acList"></div>
+        </div>
+      </div>
+    </div>
+
+    <div id="resultsSection" style="margin-top:18px;display:none">
+      <div class="card">
+        <div class="card-hdr">
+          <div class="card-title">📋 &nbsp;Results</div>
+          <div style="flex:1"></div>
+          <span style="font-size:11px;color:#C4CDD8;margin-right:12px">🟡 Yellow = MF item</span>
+          <button class="btn btn-amber btn-sm" onclick="exportExcel()">⬇ Download Excel</button>
+        </div>
+        <div style="padding:18px">
+          <div class="stats-bar" id="statsBar"></div>
+          <div class="results-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Schl No.</th><th>Description</th><th>Unit</th><th>Quantity</th><th>District</th>
+                  <th>Base Rate (Rs.)</th><th>MF Item?</th><th>MF Applied</th><th>Final Rate (Rs.)</th><th>Amount (Rs.)</th><th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="resultsBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<footer>NPWD SOR 2021 Rate Lookup Tool · NPWD · Internal use (By Aloto Albert) .</footer>
+</div><!-- /#app-root -->
+<div class="toast-area" id="toastArea"></div>
+
+<script>
+// ── Landing transition (injected) ─────────────────────────────
+function enterApp(){
+  const overlay = document.getElementById('lp-overlay');
+  const root    = document.getElementById('app-root');
+  overlay.classList.add('lp-exit');
+  setTimeout(()=>{ overlay.style.display='none'; root.style.display='block'; }, 660);
+}
+// ── State ─────────────────────────────────────────────────────
+// currentCodes: [{code, quantity, district, block_mf}]  ← block_mf is ALWAYS the Annexure-I factor e.g. 1.02
+// It is NEVER derived from server response. Server response is display-only.
+let currentCodes = [];
+let blockMFData  = {};
+
+const DISTRICTS = ['Kohima','Dimapur','Peren','Wokha','Phek','Zunheboto',
+                   'Mokokchung','Tuensang','Mon','Longleng','Kiphire','Noklak'];
+
+// ── Init ──────────────────────────────────────────────────────
+checkStatus();
+loadBlockMF();
+bindDrop('sorDZ','sorFile','sorFN');
+bindDrop('xlDZ','xlFile','xlFN');
+
+async function checkStatus(){
+  try{
+    const d = await fetch('/sor-status').then(r=>r.json());
+    const dot = document.getElementById('statusDot');
+    const txt = document.getElementById('statusText');
+    if(d.loaded){ dot.className='dot on'; txt.textContent=`SOR loaded — ${d.items} items`; }
+    else{ dot.className='dot'; txt.textContent='SOR not loaded'; }
+  }catch(e){}
+}
+
+async function loadBlockMF(){
+  try{
+    blockMFData = await fetch('/block-mf').then(r=>r.json());
+    onDistrictChange();
+  }catch(e){}
+}
+
+// ── District / Block ──────────────────────────────────────────
+function onDistrictChange(){
+  const dist   = document.getElementById('selDistrict').value;
+  const sel    = document.getElementById('selBlock');
+  const blocks = blockMFData[dist] || {};
+  sel.innerHTML = '';
+  Object.entries(blocks).forEach(([name, mf]) => {
+    const opt = document.createElement('option');
+    opt.value       = mf;
+    opt.textContent = name.includes('HQ') ? `${name}  (MF = 1.00)` : `${name}  (MF = ${mf})`;
+    sel.appendChild(opt);
+  });
+  sel.selectedIndex = 0;
+  document.getElementById('inpMF').value  = '1.00';
+  document.getElementById('mfInfo').style.display = 'none';
+}
+
+function onBlockChange(){
+  const mf = parseFloat(document.getElementById('selBlock').value);
+  document.getElementById('inpMF').value = mf.toFixed(2);
+  document.getElementById('mfInfo').style.display = mf !== 1.0 ? 'block' : 'none';
+}
+
+function getBlockMF(){
+  // Returns the Annexure-I block MF selected by user — e.g. 1.02
+  return parseFloat(document.getElementById('inpMF').value) || 1.0;
+}
+function getDistrict(){
+  return document.getElementById('selDistrict').value;
+}
+
+function toNum(v, fallback=0){
+  const n = Number(v);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function round2(v){
+  return Math.round((toNum(v) + Number.EPSILON) * 100) / 100;
+}
+
+// ── Tabs ──────────────────────────────────────────────────────
+function switchTab(id){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active', t.getAttribute('onclick').includes(id)));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.toggle('active', p.id===id));
+}
+
+// ── Drop zones ────────────────────────────────────────────────
+function bindDrop(dzId,inpId,nmId){
+  const dz=document.getElementById(dzId), inp=document.getElementById(inpId), nm=document.getElementById(nmId);
+  inp.addEventListener('change',()=>{ if(inp.files[0]){nm.textContent=inp.files[0].name;nm.style.display='block'} });
+  dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('over')});
+  dz.addEventListener('dragleave',()=>dz.classList.remove('over'));
+  dz.addEventListener('drop',e=>{
+    e.preventDefault();dz.classList.remove('over');
+    const f=e.dataTransfer.files[0];if(!f)return;
+    const dt=new DataTransfer();dt.items.add(f);inp.files=dt.files;
+    nm.textContent=f.name;nm.style.display='block';
+  });
+}
+
+// ── Upload SOR ────────────────────────────────────────────────
+async function uploadSOR(){
+  const f=document.getElementById('sorFile').files[0];
+  if(!f){toast('Select SOR PDF first.','error');return}
+  const btn=document.getElementById('btnLoad');
+  const prog=document.getElementById('sorProg'), pb=document.getElementById('sorPB');
+  btn.disabled=true; btn.innerHTML='<span class="spinner"></span> Parsing…';
+  prog.style.display='block';
+  let p=0; const iv=setInterval(()=>{p=Math.min(p+Math.random()*7,90);pb.style.width=p+'%'},300);
+  try{
+    const fd=new FormData(); fd.append('file',f);
+    const res=await fetch('/upload-sor',{method:'POST',body:fd});
+    const d=await res.json();
+    clearInterval(iv); pb.style.width='100%';
+    if(res.ok){ toast(`✅ ${d.message}`,'success'); checkStatus(); }
+    else toast(`❌ ${d.detail||'Failed'}`,'error');
+  }catch(e){ clearInterval(iv); toast('❌ Server error','error'); }
+  finally{ setTimeout(()=>{prog.style.display='none';pb.style.width='0'},1200); btn.disabled=false; btn.innerHTML='Load SOR into Memory'; }
+}
+
+// ── Lookup manual ─────────────────────────────────────────────
+async function lookupManual(){
+  const raw=document.getElementById('manualCodes').value.trim();
+  if(!raw){toast('Enter at least one code.','error');return}
+
+  const district = getDistrict();
+  const block_mf = getBlockMF();   // ← Annexure-I MF, e.g. 1.02
+
+  const codes = raw.split('\n').map(l=>l.trim()).filter(Boolean).map(line=>{
+    const parts = line.split(',').map(s=>s.trim());
+    const code  = parts[0];
+    let qty     = 1;
+    let dist    = district;
+    let bmf     = block_mf;
+
+    // Supported formats:
+    // A 4.1.5,25
+    // A 4.1.5,25,Phek
+    // A 4.1.5,25,Phek,0.93
+    if(parts[1]){
+      if(DISTRICTS.includes(parts[1])) dist = parts[1];
+      else{
+        const n = parseFloat(parts[1]);
+        if(!Number.isNaN(n)) qty = n;
+      }
+    }
+    if(parts[2]){
+      if(DISTRICTS.includes(parts[2])) dist = parts[2];
+      else{
+        const n = parseFloat(parts[2]);
+        if(!Number.isNaN(n)) bmf = n;
+      }
+    }
+    if(parts[3]){
+      const n = parseFloat(parts[3]);
+      if(!Number.isNaN(n)) bmf = n;
+    }
+
+    return { code, quantity: qty, district: dist, block_mf: bmf };
+  });
+
+  // Store exact per-row values for export.
+  currentCodes = codes.map(c=>({ ...c }));
+
+  const btn=document.querySelector('#tType .btn-primary');
+  const spin=document.getElementById('lookSpin');
+  btn.disabled=true; spin.style.display='inline-block';
+  try{
+    const res=await fetch('/lookup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({codes})});
+    const d=await res.json();
+    if(!res.ok){toast(`❌ ${d.detail}`,'error');return}
+    renderResults(d);
+  }catch(e){toast('❌ Server error','error');}
+  finally{btn.disabled=false;spin.style.display='none';}
+}
+
+// ── Upload Excel ──────────────────────────────────────────────
+async function uploadExcel(){
+  const f=document.getElementById('xlFile').files[0];
+  if(!f){toast('Select an Excel file.','error');return}
+  const district = getDistrict();
+  const block_mf = getBlockMF();
+  const btn=document.querySelector('#tUpload .btn-primary');
+  const spin=document.getElementById('xlSpin');
+  btn.disabled=true; spin.style.display='inline-block';
+  try{
+    const fd=new FormData();
+    fd.append('file',f);
+    fd.append('district',district);
+    fd.append('block_mf', String(block_mf));  // ← send sidebar block_mf
+    const res=await fetch('/upload-excel-codes',{method:'POST',body:fd});
+    const d=await res.json();
+    if(!res.ok){toast(`❌ ${d.detail}`,'error');return}
+    // Store the selected block MF and quantity for each returned row.
+    currentCodes=d.results.map(r=>({
+      code: r.code,
+      quantity: r.quantity ?? 1,
+      district: r.district,
+      block_mf: block_mf
+    }));
+    renderResults(d);
+  }catch(e){toast('❌ Server error','error');}
+  finally{btn.disabled=false;spin.style.display='none';}
+}
+
+// ── Render ────────────────────────────────────────────────────
+function renderResults(data){
+  const section=document.getElementById('resultsSection');
+  const tbody=document.getElementById('resultsBody');
+  const stats=document.getElementById('statsBar');
+  section.style.display='block';
+
+  const found    = data.results.filter(r=>r.found).length;
+  const mfCount  = data.results.filter(r=>r.found&&r.has_mf).length;
+  const nf       = data.results.length - found;
+  stats.innerHTML=`
+    <div class="stat"><div><div class="stat-n">${data.results.length}</div><div class="stat-l">Total</div></div></div>
+    <div class="stat"><div><div class="stat-n" style="color:var(--green)">${found}</div><div class="stat-l">Found</div></div></div>
+    <div class="stat"><div><div class="stat-n" style="color:#856404">${mfCount}</div><div class="stat-l">MF Items</div></div></div>
+    ${nf?`<div class="stat"><div><div class="stat-n" style="color:var(--red)">${nf}</div><div class="stat-l">Not Found</div></div></div>`:''}
+  `;
+
+  tbody.innerHTML='';
+  data.results.forEach((r, idx)=>{
+    const tr=document.createElement('tr');
+    if(!r.found) tr.className='nf';
+    else if(r.has_mf) tr.className='mf-row';
+
+    const input = currentCodes[idx] || {};
+    const quantity = r.found ? toNum(input.quantity ?? r.quantity ?? 1, 1) : 0;
+    const localMf = r.found ? (r.has_mf ? round2(input.block_mf ?? r.mf_applied ?? 1.0) : 1.00) : null;
+    const localFinal = r.found ? (r.has_mf ? round2(toNum(r.base_rate) * localMf) : round2(r.base_rate)) : null;
+    const amount = r.found ? round2(toNum(r.amount ?? (localFinal * quantity))) : null;
+
+    tr.innerHTML=`
+      <td class="code-cell">${r.code}</td>
+      <td class="desc-cell">${r.description}</td>
+      <td>${r.unit||'—'}</td>
+      <td>${r.found ? quantity : '—'}</td>
+      <td>${r.district}</td>
+      <td class="rate-cell">${r.found?'Rs. '+toNum(r.base_rate).toFixed(2):'—'}</td>
+      <td><span class="${r.has_mf?'b-mf':'b-no'}">${r.has_mf?'YES':'No'}</span></td>
+      <td class="mf-val">${r.found ? localMf.toFixed(2) : '—'}</td>
+      <td class="final-cell">${r.found?'Rs. '+localFinal.toFixed(2):'—'}</td>
+      <td class="final-cell">${r.found?'Rs. '+amount.toFixed(2):'—'}</td>
+      <td><span class="b-found ${r.found?'ok':'nf'}">${r.found?'Found':'Not Found'}</span></td>
+    `;
+    tbody.appendChild(tr);
+  });
+  section.scrollIntoView({behavior:'smooth',block:'start'});
+  toast(`✅ ${found}/${data.results.length} resolved — ${mfCount} MF items`,'success');
+}
+
+// ── Export ────────────────────────────────────────────────────
+async function exportExcel(){
+  if(!currentCodes.length){toast('No codes to export.','error');return}
+  try{
+    const res=await fetch('/export-excel',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({codes:currentCodes})});
+    if(!res.ok){toast('Export failed','error');return}
+    const blob=await res.blob();
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');a.href=url;a.download='SOR_Rate_Output.xlsx';
+    document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
+    toast('✅ Excel downloaded!','success');
+  }catch(e){toast('❌ Export error','error');}
+}
+
+// ── Search ────────────────────────────────────────────────────
+let sTimer=null;
+async function searchSOR(){
+  const q=document.getElementById('searchInput').value.trim();
+  const list=document.getElementById('acList');
+  if(q.length<2){list.classList.remove('open');return}
+  clearTimeout(sTimer);
+  sTimer=setTimeout(async()=>{
+    try{
+      const d=await fetch(`/search?q=${encodeURIComponent(q)}`).then(r=>r.json());
+      list.innerHTML='';
+      if(!d.results.length){list.classList.remove('open');return}
+      d.results.forEach(item=>{
+        const div=document.createElement('div');div.className='ac-item';
+        div.innerHTML=`<div class="ac-code">${item.code}${item.has_mf?' <span class="b-mf" style="font-size:9px">MF</span>':''}</div><div class="ac-desc">${item.description}</div>`;
+        div.onclick=()=>{ document.getElementById('searchInput').value=item.code; list.classList.remove('open'); lookupSingle(item.code); };
+        list.appendChild(div);
+      });
+      list.classList.add('open');
+    }catch(e){}
+  },250);
+}
+
+async function lookupSingle(code){
+  const district = getDistrict();
+  const block_mf = getBlockMF();
+  const res=await fetch('/lookup',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({codes:[{code,district,block_mf}]})});
+  const d=await res.json();
+  currentCodes=[{code, quantity:1, district, block_mf}];
+  renderResults(d);
+}
+
+document.addEventListener('click',e=>{
+  if(!e.target.closest('.srch-wrap')) document.getElementById('acList').classList.remove('open');
+});
+
+function clearManual(){
+  document.getElementById('manualCodes').value='';
+  document.getElementById('resultsSection').style.display='none';
+  currentCodes=[];
+}
+
+function toast(msg,type='info'){
+  const a=document.getElementById('toastArea');
+  const d=document.createElement('div');d.className=`toast ${type}`;d.textContent=msg;
+  a.appendChild(d);setTimeout(()=>d.remove(),4500);
+}
+</script>
+</body>
+</html>
